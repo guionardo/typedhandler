@@ -27,3 +27,18 @@ jobs:
         uses: golangci/golangci-lint-action@v9
         with:
           version: v2.6
+  test:
+    name: Go test coverage check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+      - name: Set GOTOOLCHAIN
+        run: echo "GOTOOLCHAIN=local" >> $GITHUB_ENV
+      - name: generate test coverage
+        run: go test ./... -coverprofile=./cover.out -covermode=atomic -coverpkg=./...
+
+      - name: check test coverage
+        uses: vladopajic/go-test-coverage@v2
+        with:
+          config: ./.testcoverage.yml
