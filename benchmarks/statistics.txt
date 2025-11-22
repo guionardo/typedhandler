@@ -1,0 +1,10 @@
+goos: linux
+goarch: amd64
+pkg: router/router
+cpu: Intel(R) Core(TM) 7 250U
+BenchmarkCreateHandler/easyjson_pool_enabled-12         	  821148	      1461 ns/op	       233.0 instances	    1970 B/op	      25 allocs/op
+BenchmarkCreateHandler/easyjson_pool_disabled-12        	  734167	      1458 ns/op	    734167 instances	    2113 B/op	      26 allocs/op
+BenchmarkCreateHandler/normal_json_pool_enabled-12      	  755145	      1561 ns/op	       226.0 instances	    2066 B/op	      27 allocs/op
+BenchmarkCreateHandler/normal_json_pool_disabled-12     	  652898	      1586 ns/op	    652898 instances	    2209 B/op	      28 allocs/op
+PASS
+ok  	router/router	4.491s
