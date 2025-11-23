@@ -1,4 +1,4 @@
-package typedhandler
+package sample
 
 type (
 	//easyjson:json

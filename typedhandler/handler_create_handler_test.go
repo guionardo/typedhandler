@@ -9,23 +9,24 @@ import (
 
 	"testing"
 
+	"github.com/guionardo/typedhandler/examples/sample"
 	"github.com/guionardo/typedhandler/typedhandler"
 	"github.com/stretchr/testify/assert"
 )
 
-func parseRequest(request *http.Request) (*typedhandler.Request, error) {
-	var instance typedhandler.Request
+func parseRequest(request *http.Request) (*sample.Request, error) {
+	var instance sample.Request
 
 	err := json.NewDecoder(request.Body).Decode(&instance)
 
 	return &instance, err
 }
 
-func serviceRun(ctx context.Context, request *typedhandler.Request) (typedhandler.Response, int, error) {
-	return typedhandler.Response{Message: request.Name}, http.StatusOK, nil
+func serviceRun(ctx context.Context, request *sample.Request) (sample.Response, int, error) {
+	return sample.Response{Message: request.Name}, http.StatusOK, nil
 }
-func serviceRunNormal(ctx context.Context, request *typedhandler.RequestNormal) (typedhandler.Response, int, error) {
-	return typedhandler.Response{Message: request.Name}, http.StatusOK, nil
+func serviceRunNormal(ctx context.Context, request *sample.RequestNormal) (sample.Response, int, error) {
+	return sample.Response{Message: request.Name}, http.StatusOK, nil
 }
 
 func TestCreateHandler(t *testing.T) {
@@ -35,8 +36,7 @@ func TestCreateHandler(t *testing.T) {
 
 		typedhandler.ResetCreatedInstances()
 
-		parser := typedhandler.CreateParser[*typedhandler.Request]()
-		handler := typedhandler.CreateHandler(parser, serviceRun)
+		handler := typedhandler.CreateSimpleHandler(serviceRun)
 		request, _ := http.NewRequest("POST", "/", bytes.NewBuffer([]byte(`{"name":"John Doe"}`)))
 		response := httptest.NewRecorder()
 		handler(response, request)
@@ -76,7 +76,7 @@ func easyjsonPoolEnabled(b *testing.B) {
 
 	typedhandler.ResetCreatedInstances()
 
-	parser := typedhandler.CreateParser[*typedhandler.Request]()
+	parser := typedhandler.CreateParser[*sample.Request]()
 	for b.Loop() {
 		handler := typedhandler.CreateHandler(parser, serviceRun)
 		request, _ := http.NewRequest("POST", "/", bytes.NewBuffer([]byte(`{"name":"John Doe"}`)))
@@ -92,7 +92,7 @@ func easyJsonPoolDisabled(b *testing.B) {
 
 	typedhandler.ResetCreatedInstances()
 
-	parser := typedhandler.CreateParser[*typedhandler.Request]()
+	parser := typedhandler.CreateParser[*sample.Request]()
 	for b.Loop() {
 		handler := typedhandler.CreateHandler(parser, serviceRun)
 		request, _ := http.NewRequest("POST", "/", bytes.NewBuffer([]byte(`{"name":"John Doe"}`)))
@@ -108,7 +108,7 @@ func normalJsonPoolEnabled(b *testing.B) {
 
 	typedhandler.ResetCreatedInstances()
 
-	parser := typedhandler.CreateParser[*typedhandler.RequestNormal]()
+	parser := typedhandler.CreateParser[*sample.RequestNormal]()
 	for b.Loop() {
 		handler := typedhandler.CreateHandler(parser, serviceRunNormal)
 		request, _ := http.NewRequest("POST", "/", bytes.NewBuffer([]byte(`{"name":"John Doe"}`)))
@@ -124,7 +124,7 @@ func normalJsonPoolDisabled(b *testing.B) {
 
 	typedhandler.ResetCreatedInstances()
 
-	parser := typedhandler.CreateParser[*typedhandler.RequestNormal]()
+	parser := typedhandler.CreateParser[*sample.RequestNormal]()
 	for b.Loop() {
 		handler := typedhandler.CreateHandler(parser, serviceRunNormal)
 		request, _ := http.NewRequest("POST", "/", bytes.NewBuffer([]byte(`{"name":"John Doe"}`)))

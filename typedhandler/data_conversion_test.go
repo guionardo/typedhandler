@@ -170,3 +170,123 @@ func Test_convertData(t *testing.T) { //nolint
 		})
 	}
 }
+
+func valueOfInt() reflect.Value {
+	var i int
+	return reflect.ValueOf(&i).Elem()
+}
+
+func valueOfUint() reflect.Value {
+	var u uint
+	return reflect.ValueOf(&u).Elem()
+}
+
+func valueOfFloat64() reflect.Value {
+	var f float64
+	return reflect.ValueOf(&f).Elem()
+}
+
+func valueOfBool() reflect.Value {
+	var b bool
+	return reflect.ValueOf(&b).Elem()
+}
+
+func valueOfTime() reflect.Value {
+	var t time.Time
+	return reflect.ValueOf(&t).Elem()
+}
+
+func Test_convertByKind(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string // description of this test case
+		// Named input parameters for target function.
+		data    string
+		field   reflect.Value
+		wantErr bool
+	}{
+		{
+			name:    "convert int success",
+			data:    "42",
+			field:   valueOfInt(),
+			wantErr: false,
+		}, {
+			name:    "convert uint success",
+			data:    "42",
+			field:   valueOfUint(),
+			wantErr: false,
+		}, {
+			name:    "convert float64 success",
+			data:    "3.14",
+			field:   valueOfFloat64(),
+			wantErr: false,
+		}, {
+			name:    "convert bool success",
+			data:    "true",
+			field:   valueOfBool(),
+			wantErr: false,
+		}, {
+
+			name:    "convert int failure",
+			data:    "not_an_int",
+			field:   valueOfInt(),
+			wantErr: true,
+		}, {
+			name:    "convert bool failure",
+			data:    "not_a_bool",
+			field:   valueOfBool(),
+			wantErr: true,
+		}, {
+			name:    "convert time.Time default",
+			data:    "2021-01-01T00:00:00Z",
+			field:   valueOfTime(),
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			gotErr := convertByKind(tt.data, tt.field)
+			if tt.wantErr {
+				require.Error(t, gotErr)
+			} else {
+				require.NoError(t, gotErr)
+			}
+		})
+	}
+}
+
+func Test_getBitSize(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string // description of this test case
+		// Named input parameters for target function.
+		kind reflect.Kind
+		want int
+	}{
+		{"bool", reflect.Bool, 64},
+		{"int", reflect.Int, 64},
+		{"int8", reflect.Int8, 8},
+		{"int16", reflect.Int16, 16},
+		{"int32", reflect.Int32, 32},
+		{"int64", reflect.Int64, 64},
+		{"uint", reflect.Uint, 64},
+		{"uint8", reflect.Uint8, 8},
+		{"uint16", reflect.Uint16, 16},
+		{"uint32", reflect.Uint32, 32},
+		{"uint64", reflect.Uint64, 64},
+		{"float32", reflect.Float32, 32},
+		{"float64", reflect.Float64, 64},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got := getBitSize(tt.kind)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}

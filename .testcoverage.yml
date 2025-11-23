@@ -38,38 +38,39 @@ override:
 exclude:
   # Exclude files or packages matching their paths
   paths:
-    - \.pb\.go$    # excludes all protobuf generated files
-    - ^pkg/bar     # exclude package `pkg/bar`
+    - examples/    # exclude all files in `examples` directory
+    # - \.pb\.go$    # excludes all protobuf generated files
+    # - ^pkg/bar     # exclude package `pkg/bar`
 
 # (optional; default false)
 # When true, requires all coverage-ignore annotations to include explanatory comments
-force-annotation-comment: false
+# force-annotation-comment: false
 
 # If specified, saves the current test coverage breakdown to this file.
 #
 # Typically, this breakdown is generated only for main (base) branches and
 # stored as an artifact. Later, this file can be used in feature branches
 # to compare test coverage against the base branch.
-breakdown-file-name: ''
+# breakdown-file-name: ''
 
-diff:
-  # Path to the test coverage breakdown file from the base branch.
-  #
-  # This file is usually generated and stored in the main (base) branch,
-  # controled via `breakdown-file-name` property.
-  # When set in a feature branch, it allows the tool to compute and report
-  # the coverage difference between the current (feature) branch and the base.
-  base-breakdown-file-name: ''
+# diff:
+#   # Path to the test coverage breakdown file from the base branch.
+#   #
+#   # This file is usually generated and stored in the main (base) branch,
+#   # controled via `breakdown-file-name` property.
+#   # When set in a feature branch, it allows the tool to compute and report
+#   # the coverage difference between the current (feature) branch and the base.
+#   base-breakdown-file-name: ''
 
-  # Allowed threshold for the test coverage difference (in percentage)
-  # between the feature branch and the base branch.
-  #
-  # By default, this is disabled (set to null). Valid values range from
-  # -100.0 to +100.0.
-  #
-  # Example:
-  #   If set to 0.5, an error will be reported if the feature branch has
-  #   less than 0.5% more coverage than the base.
-  #
-  #   If set to -0.5, the check allows up to 0.5% less coverage than the base.
-  threshold: null
+#   # Allowed threshold for the test coverage difference (in percentage)
+#   # between the feature branch and the base branch.
+#   #
+#   # By default, this is disabled (set to null). Valid values range from
+#   # -100.0 to +100.0.
+#   #
+#   # Example:
+#   #   If set to 0.5, an error will be reported if the feature branch has
+#   #   less than 0.5% more coverage than the base.
+#   #
+#   #   If set to -0.5, the check allows up to 0.5% less coverage than the base.
+#   threshold: null

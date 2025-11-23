@@ -20,7 +20,8 @@ func CreateParser[RIn RequestSchema]() ParseRequestFunc[RIn] {
 	pool := NewInstancePool(resetFunc)
 
 	return func(r *http.Request) (instance RIn, err error) {
-		instance = NewInstance[RIn](infos.dataType)
+		instance = pool.NewInstance()
+		// instance = NewInstance[RIn](infos.dataType)
 
 		ptrValue := reflect.ValueOf(instance)
 		structValue := ptrValue.Elem()
