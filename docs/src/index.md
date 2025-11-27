@@ -36,6 +36,10 @@ Typed Handler is a high-performance, zero-allocation HTTP request parser for Go 
 
     Supports custom error types, body parsing strategies, and reset patterns
 
+- ✨ **Future features**
+
+    Generated code, to increase performance with zero reflection
+
 </div>
 
 [Get started :material-arrow-right-bold:](get-started/index.md){ .md-button .md-button--primary }

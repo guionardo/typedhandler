@@ -154,6 +154,7 @@ nav:
     # - get-started/many-handlers.md
     # - get-started/conclusion.md
   - Concepts:
+    - Struct tag based: concepts/struct-tag-based.md
   #   - Container: container.md
   #   - Lifecycle: lifecycle.md
     - Modules: modules.md
