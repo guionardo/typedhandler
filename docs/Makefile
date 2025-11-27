@@ -1,6 +1,6 @@
 .PHONY: build
 build:
-	uv run mkdocs build
+	@uv run mkdocs build
 
 .PHONY: serve
 serve:

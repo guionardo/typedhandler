@@ -122,4 +122,4 @@ lint-fix: check_golangci ## Run linters and fix issues
 
 .PHONY: docs
 docs: ## Build documentation
-	cd docs && make build
+	@cd docs && make build

@@ -1,9 +1,15 @@
+[project]
+name = "typedhandler-docs"
+requires-python = ">= 3.11"
+version = "0.0.0"
+
 [tool.uv]
 dev-dependencies = [
     "mkdocs-material>=9.5.33",
     "mkdocs-git-revision-date-localized-plugin>=1.2.7",
     "mkdocs>=1.6.0",
     "mkdocs-redirects>=1.2.1",
+    "mkdocs-include-markdown-plugin>=7.2.0",
 ]
 [tool.uv.workspace]
 members = []

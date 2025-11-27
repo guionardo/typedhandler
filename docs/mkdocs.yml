@@ -84,6 +84,8 @@ plugins:
       enable_creation_date: true
       fallback_to_build_date: true
 
+  - include-markdown
+
   # Redirect old links to new ones.
   # - redirects:
   #     redirect_maps:
