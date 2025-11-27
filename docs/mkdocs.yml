@@ -1,11 +1,11 @@
 site_name: Typed Handler
-site_url: https://uber-go.github.io/fx
+site_url: https://guionardo.github.io/typedhandler
 site_description: >-
-  A dependency injection system for Go.
+  Typed Handler is a high-performance, zero-allocation HTTP request parser for Go that automatically maps HTTP requests to strongly-typed structs using generics and object pooling.
 
-repo_url: https://github.com/uber-go/fx
-repo_name: uber-go/fx
-edit_uri: edit/master/docs/src/
+repo_url: https://github.com/guionardo/typedhandler
+repo_name: guionardo/typedhandler
+edit_uri: edit/main/docs/src/
 
 # .md files reside inside the src directory.
 docs_dir: src
@@ -167,7 +167,7 @@ nav:
   - Community:
     - Contributing: contributing.md
   - Release notes: changelog.md
-  - API Reference: https://pkg.go.dev/go.uber.org/fx
+  - API Reference: https://pkg.go.dev/guionardo/typedhandler
 
 # Pages that are not listed in the nav must be listed here.
 # not_in_nav: |
