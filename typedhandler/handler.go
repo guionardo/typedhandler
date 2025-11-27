@@ -5,21 +5,15 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strings"
+
+	"github.com/go-playground/validator/v10"
 )
 
 type (
 	HandlerFunc                                         func(w http.ResponseWriter, r *http.Request)
 	ServiceFunc[RIn RequestSchema, ROut ResponseSchema] func(ctx context.Context, request RIn) (response ROut, status int, err error) //nolint
 	ParseRequestFunc[RIn RequestSchema]                 func(r *http.Request) (instance RIn, err error)
-
-	HttpError interface {
-		error
-		Status() int
-	}
-	HttpJsonError interface {
-		HttpError
-		Json() []byte
-	}
 )
 
 // CreateHandler creates a typed HTTP handler with the provided request parser, done function, and service function.
@@ -51,9 +45,24 @@ func CreateHandler[RIn RequestSchema, ROut ResponseSchema](
 ) HandlerFunc {
 	mustBeAPointer[RIn]()
 
+	var (
+		zero     RIn
+		preParse func(*http.Request) error
+	)
+	if preParseable, ok := any(zero).(PreParseable); ok {
+		preParse = preParseable.PreParse
+	}
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		if doneFunc != nil {
 			defer doneFunc()
+		}
+		// pre-parse the request
+		if preParse != nil {
+			if err := preParse(r); err != nil {
+				writeErrorResponse(w, err)
+				return
+			}
 		}
 		instance, err := parseRequestFunc(r)
 		if err != nil {
@@ -93,11 +102,15 @@ func writeResponse[ROut ResponseSchema](w http.ResponseWriter, status int, respo
 
 func writeErrorResponse(w http.ResponseWriter, err error) {
 	var (
-		jsonError HttpJsonError
-		httpError HttpError
+		jsonError     HttpJsonError
+		httpError     HttpError
+		validateError validator.ValidationErrors
 	)
 	switch {
+	case errors.As(err, &validateError):
+		validationErrorToHttpJsonError(err, w)
 	case errors.As(err, &jsonError):
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(jsonError.Status())
 		_, _ = w.Write(jsonError.Json())
 	case errors.As(err, &httpError):
@@ -108,5 +121,32 @@ func writeErrorResponse(w http.ResponseWriter, err error) {
 			w.WriteHeader(http.StatusInternalServerError)
 			_, _ = w.Write([]byte(err.Error()))
 		}
+	}
+}
+
+func validationErrorToHttpJsonError(err error, w http.ResponseWriter) {
+	var validateError validator.ValidationErrors
+	if errors.As(err, &validateError) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+
+		sb := strings.Builder{}
+		sb.WriteString("[")
+
+		for i := range validateError {
+			before, after, found := strings.Cut(validateError[i].Error(), " Error:")
+			if found {
+				sb.WriteString("\"" + after + "\"")
+			} else {
+				sb.WriteString("\"" + before + "\"")
+			}
+
+			if i < len(validateError)-1 {
+				sb.WriteString(",")
+			}
+		}
+
+		sb.WriteString("]")
+		_, _ = w.Write([]byte(sb.String()))
 	}
 }

@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/guionardo/typedhandler/examples/sample"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -70,6 +71,28 @@ func Test_writeErrorResponse(t *testing.T) {
 		)
 		assert.Equal(t, http.StatusBadRequest, w.Result().StatusCode)
 		assert.JSONEq(t, "{\"message\":\"Bad Request\"}", w.Body.String())
+	})
+	t.Run("validation_error", func(t *testing.T) {
+		t.Parallel()
+
+		type validationError struct {
+			Name string `validate:"required"`
+			Age  int    `validate:"min=1"`
+		}
+
+		val := validator.New(validator.WithRequiredStructEnabled())
+		validationErrs := val.Struct(validationError{})
+
+		w := httptest.NewRecorder()
+
+		writeErrorResponse(w, validationErrs)
+		assert.Equal(t, http.StatusBadRequest, w.Result().StatusCode)
+		assert.JSONEq(
+			t,
+			`["Field validation for 'Name' failed on the 'required' tag",`+
+				`"Field validation for 'Age' failed on the 'min' tag"]`,
+			w.Body.String(),
+		)
 	})
 }
 

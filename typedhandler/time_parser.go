@@ -58,6 +58,5 @@ func rearrangeLayoutToFront(index int) {
 	if index == 0 {
 		return
 	}
-
 	timeLayouts[0], timeLayouts[index] = timeLayouts[index], timeLayouts[0]
 }
