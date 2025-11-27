@@ -1,48 +1,40 @@
-# Fx
+# Typed Handler
 
-Fx is **a dependency injection system for Go**.
+Typed Handler is a high-performance, zero-allocation HTTP request parser for Go that automatically maps HTTP requests to strongly-typed structs using generics and object pooling.
 
 <div class="grid cards" markdown>
 
-- **Eliminate globals**
+- 🚀 **Zero Allocations**
 
     ---
 
-    By using Fx-managed singletons,
-    you can eliminate global state from your application.
-    With Fx, you don't have to rely on `init()` functions for setup,
-    instead relying on Fx to manage the lifecycle of your application.
+    Uses `sync.Pool` for request struct reuse
 
-- **Reduce boilerplate**
+- 🎯 **Type-Safe**
 
     ---
 
-    Fx reduces the amount of code copy-pasted across your services.
-    It lets you define shared application setup in a single place,
-    and then reuse it across all your services.
+    Leverages Go generics for compile-time type checking
 
-- **Automatic plumbing**
+- 🏷️ **Struct Tag-Based**
 
     ---
 
-    Fx automatically constructs your application's dependency graph.
-    A component added to the application can be used by any other component
-    without any additional configuration.
+    Parse path params, query strings, headers, and body with simple tags
 
     <!-- [Learn more about the dependency container :material-arrow-right:](container.md) -->
 
-- **Code reuse**
+- ⚡ **High Performance**
 
     ---
 
-    Fx lets teams within your organization build loosely-coupled
-    and well-integrated shareable components referred to as modules.
+    Reflection done once at initialization, cached for reuse
 
     [Learn more about modules :material-arrow-right:](modules.md)
 
-- **Battle-tested**
+- 🔧 **Flexible**
 
-    Fx is the backbone of nearly all Go services at Uber.
+    Supports custom error types, body parsing strategies, and reset patterns
 
 </div>
 
