@@ -3,6 +3,8 @@ name: GitHub Pages
 on:
   push:
     tags: ['v*']
+    paths:
+      - docs/**
 
   # This lets us publish the workflow
   # manually from the GitHub Actions UI.
