@@ -2,6 +2,8 @@
 
 [![golangci lint](https://github.com/guionardo/typedhandler/actions/workflows/golangci.yml/badge.svg)](https://github.com/guionardo/typedhandler/actions/workflows/golangci.yml)
 ![coverage](https://raw.githubusercontent.com/guionardo/typehandler/badges/.badges/main/coverage.svg)
+[![Dependabot Updates](https://github.com/guionardo/typedhandler/actions/workflows/dependabot/dependabot-updates/badge.svg)](https://github.com/guionardo/typedhandler/actions/workflows/dependabot/dependabot-updates)
+[![GitHub Pages](https://github.com/guionardo/typedhandler/actions/workflows/docs.yml/badge.svg)](https://guionardo.github.io/typedhandler/)
 
 A high-performance, zero-allocation HTTP request parser for Go that automatically maps HTTP requests to strongly-typed structs using generics and object pooling.
 
