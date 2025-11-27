@@ -17,6 +17,7 @@ const (
 var (
 	timeType     = reflect.TypeFor[time.Time]()
 	durationType = reflect.TypeFor[time.Duration]()
+	TimeFormats  = []string{time.RFC3339, time.RFC3339Nano, time.RFC1123, time.RFC1123Z, time.ANSIC}
 )
 
 // convertData converts the data to the appropriate type and sets it in the struct
@@ -99,6 +100,7 @@ func getBitSize(kind reflect.Kind) int {
 	}
 }
 
+// convertBool converts a string to a boolean and sets it in the struct field
 func convertBool(data string, field reflect.Value) (err error) {
 	var boolValue bool
 	if boolValue, err = strconv.ParseBool(data); err == nil {
@@ -108,6 +110,7 @@ func convertBool(data string, field reflect.Value) (err error) {
 	return err
 }
 
+// convertDuration converts a string to a time.Duration and sets it in the struct field
 func convertDuration(data string, field reflect.Value) (err error) {
 	var durationValue time.Duration
 	if durationValue, err = time.ParseDuration(data); err == nil {
@@ -146,7 +149,7 @@ func convertFloat(data string, bitSize int, field reflect.Value) (err error) {
 
 func convertTime(data string, field reflect.Value) (err error) {
 	var timeValue time.Time
-	if timeValue, err = time.Parse(time.RFC3339, data); err == nil {
+	if timeValue, err = ParseTime(data); err == nil {
 		field.Set(reflect.ValueOf(timeValue))
 	}
 

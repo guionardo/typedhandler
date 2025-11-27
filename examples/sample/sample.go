@@ -8,7 +8,7 @@ type (
 		City     string `json:"city" query:"city"`
 		State    string `json:"state" header:"state"`
 		Country  string `json:"country" path:"country"`
-		Zip      string `json:"zip"`
+		Zip      string `json:"zip" form:"zip"`
 		Phone    string `json:"phone" `
 		Email    string `json:"email" validate:"email"`
 		Password string `json:"password"`

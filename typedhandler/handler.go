@@ -5,16 +5,14 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"reflect"
 )
 
 type (
 	HandlerFunc                                         func(w http.ResponseWriter, r *http.Request)
 	ServiceFunc[RIn RequestSchema, ROut ResponseSchema] func(ctx context.Context, request RIn) (response ROut, status int, err error) //nolint
 	ParseRequestFunc[RIn RequestSchema]                 func(r *http.Request) (instance RIn, err error)
-	RequestSchema                                       any
-	ResponseSchema                                      any
-	HttpError                                           interface {
+
+	HttpError interface {
 		error
 		Status() int
 	}
@@ -24,25 +22,42 @@ type (
 	}
 )
 
+// CreateHandler creates a typed HTTP handler with the provided request parser, done function, and service function.
+// The request parser is responsible for parsing the incoming HTTP request into the specified request schema type RIn.
+// The done function is called at the end of the request handling, if provided.
+// The service function processes the parsed request and returns a response of type ROut, along with an HTTP status code
+// and an error if any.
+//
+// Where it's used:
+//   - Examples: See `examples/simple/main.go` for a runnable example that calls
+//     requestParser, doneFunc := typedhandler.CreateParser[*LoginRequest]()
+//     handler := typedhandler.CreateHandler(requestParser, doneFunc, serviceFunc)
+//   - Quick start: README.md includes a short usage example that demonstrates
+//     creating a parser and passing it to `CreateHandler`.
+//   - Tests & Benchmarks: The behavior of `CreateHandler` is exercised in
+//     `typedhandler/handler_test.go` and `typedhandler/handler_create_handler_test.go`
+//     (unit tests and benchmarks).
+//   - Convenience wrapper: `CreateSimpleHandler` calls `CreateParser` and then
+//     delegates to `CreateHandler`, so you can use `CreateSimpleHandler` when
+//     you prefer the library to build the parser for you.
+//
+// In short, `CreateHandler` is the core function that composes parsing,
+// business logic (service function), and response/error writing into a
+// standard `http.HandlerFunc` usable with `http.HandleFunc` or any
+// net/http-compatible router.
 func CreateHandler[RIn RequestSchema, ROut ResponseSchema](
-	parseRequestFunc ParseRequestFunc[RIn],
+	parseRequestFunc ParseRequestFunc[RIn], doneFunc func(),
 	serviceFunc ServiceFunc[RIn, ROut],
 ) HandlerFunc {
-	t := reflect.TypeFor[RIn]()
-	if t.Kind() != reflect.Pointer {
-		panic("CreateHandler must receive *" + t.Elem().Name())
-	}
-
-	resetFunc := createResetFunc[RIn](getParserInfos[RIn]())
-	pool := NewInstancePool(resetFunc)
+	mustBeAPointer[RIn]()
 
 	return func(w http.ResponseWriter, r *http.Request) {
+		if doneFunc != nil {
+			defer doneFunc()
+		}
 		instance, err := parseRequestFunc(r)
 		if err != nil {
-			pool.Put(instance)
-
 			writeErrorResponse(w, err)
-
 			return
 		}
 
@@ -56,8 +71,8 @@ func CreateHandler[RIn RequestSchema, ROut ResponseSchema](
 }
 
 func CreateSimpleHandler[RIn RequestSchema, ROut ResponseSchema](serviceFunc ServiceFunc[RIn, ROut]) HandlerFunc {
-	parserFunc := CreateParser[RIn]()
-	return CreateHandler(parserFunc, serviceFunc)
+	parserFunc, doneFunc := CreateParser[RIn]()
+	return CreateHandler(parserFunc, doneFunc, serviceFunc)
 }
 
 func writeResponse[ROut ResponseSchema](w http.ResponseWriter, status int, response ROut) error {

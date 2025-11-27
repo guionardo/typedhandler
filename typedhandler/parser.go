@@ -13,93 +13,37 @@ type (
 	}
 )
 
-func CreateParser[RIn RequestSchema]() ParseRequestFunc[RIn] {
-	infos := getParserInfos[RIn]()
+// CreateParser creates a ParseRequestFunc and a doneFunc for request schema RIn
+// RIn must be a pointer type
+// The doneFunc must be called when the parser is no longer needed to release resources
+func CreateParser[RIn RequestSchema]() (parserFunc ParseRequestFunc[RIn], doneFunc func()) {
+	schemaHelper := GetSchemaHelper[RIn]()
 
-	resetFunc := createResetFunc[RIn](infos)
-	pool := NewInstancePool(resetFunc)
+	instance := schemaHelper.GetInstance()
 
-	return func(r *http.Request) (instance RIn, err error) {
-		instance = pool.NewInstance()
-		// instance = NewInstance[RIn](infos.dataType)
+	return func(r *http.Request) (RIn, error) {
+			ptrValue := reflect.ValueOf(instance)
+			structValue := ptrValue.Elem()
 
-		ptrValue := reflect.ValueOf(instance)
-		structValue := ptrValue.Elem()
+			var err error
+			if err = schemaHelper.parseRequestBody(r, instance); err == nil {
+				err = schemaHelper.parseRequestHeaders(r, structValue)
+			}
 
-		err = parseBody(r, infos, instance)
-		if err == nil {
-			err = parseHeaders(r, infos, structValue)
+			if err == nil {
+				err = schemaHelper.parseRequestPath(r, structValue)
+			}
+
+			if err == nil {
+				err = schemaHelper.parseRequestQuery(r, structValue)
+			}
+
+			if err == nil {
+				err = schemaHelper.validateFunc(instance)
+			}
+
+			return instance, err
+		}, func() {
+			schemaHelper.PutInstance(instance)
 		}
-
-		if err == nil {
-			err = parseQuery(r, infos, structValue)
-		}
-
-		if err == nil {
-			err = parsePath(r, infos, structValue)
-		}
-
-		pool.Put(instance)
-
-		return instance, err
-	}
-}
-
-func parseBody[RIn RequestSchema](r *http.Request, infos *ParserInfos, instance RIn) error {
-	if infos.bodyType != NoBody {
-		return infos.parseBodyFunc(r, instance)
-	}
-
-	return nil
-}
-
-// parseHeaders parses the headers and sets the values in the struct
-// A header value is always a string
-func parseHeaders(r *http.Request, infos *ParserInfos, structValue reflect.Value) error {
-	if len(infos.headerFields) == 0 {
-		return nil
-	}
-
-	for key, value := range infos.headerFields {
-		header := r.Header.Get(value)
-		if err := convertData(header, int(key), structValue); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-// parseQuery parses the query and sets the values in the struct
-// A query value can be: string, int, uint, float64, bool, time.Time, time.Duration
-func parseQuery(r *http.Request, infos *ParserInfos, structValue reflect.Value) error {
-	if len(infos.queryFields) == 0 {
-		return nil
-	}
-
-	for key, value := range infos.queryFields {
-		query := r.URL.Query().Get(value)
-		if err := convertData(query, int(key), structValue); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-// parsePath parses the path and sets the values in the struct
-// A path value can be: string, int, uint, float64, bool, time.Time, time.Duration
-func parsePath(r *http.Request, infos *ParserInfos, structValue reflect.Value) error {
-	if len(infos.pathFields) == 0 {
-		return nil
-	}
-
-	for key, value := range infos.pathFields {
-		path := r.PathValue(value)
-		if err := convertData(path, int(key), structValue); err != nil {
-			return err
-		}
-	}
-
-	return nil
 }

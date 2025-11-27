@@ -28,6 +28,7 @@ install-pre-commit:
 install-golangci:
 	@echo  "\n🛠️  \033[30;42m INSTALLING GOLANGCI-LINT \033[0m"
 	@curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b $$(go env GOPATH)/bin latest
+	@golangci-lint cache clean
 	@echo "✅  GOLANGCI-LINT INSTALLED"
 
 install-commitlint:
@@ -59,7 +60,7 @@ install-govulncheck:
 install-go-test-coverage:
 	@echo  "\n🛠️  \033[30;42m INSTALLING GO-TEST-COVERAGE \033[0m"
 	@go install github.com/vladopajic/go-test-coverage/v2@latest
-	@if [ -f .testcoverate.yml ]; then \
+	@if [ -f .testcoverage.yml ]; then \
 		echo "go-test-coverage config file already exists."; \
 	else \
 		echo "Creating default go-test-coverage config file..."; \
@@ -77,7 +78,7 @@ check-go-test-coverage:
 	fi
 
 test: ## Run tests
-	@go test ./... -v
+	@go test ./... -v -race
 
 test-e2e: ## Run end-to-end tests
 	@go mod vendor
@@ -118,3 +119,7 @@ lint: check_golangci ## Run linters
 
 lint-fix: check_golangci ## Run linters and fix issues
 	@golangci-lint run --fix ./...
+
+.PHONY: docs
+docs: ## Build documentation
+	cd docs && make build

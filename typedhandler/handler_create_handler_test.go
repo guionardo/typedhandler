@@ -34,17 +34,23 @@ func TestCreateHandler(t *testing.T) {
 	t.Run("no_error", func(t *testing.T) {
 		t.Parallel()
 
-		typedhandler.ResetCreatedInstances()
-
 		handler := typedhandler.CreateSimpleHandler(serviceRun)
-		request, _ := http.NewRequest("POST", "/", bytes.NewBuffer([]byte(`{"name":"John Doe"}`)))
+		request, _ := http.NewRequest(
+			"POST",
+			"/",
+			bytes.NewBuffer([]byte(`{"name":"John Doe","email":"john@doe.com"}`)),
+		)
 		response := httptest.NewRecorder()
 		handler(response, request)
 		assert.Equal(t, http.StatusOK, response.Result().StatusCode)
 		assert.JSONEq(t, "{\"Message\":\"John Doe\"}", response.Body.String())
 
 		response = httptest.NewRecorder()
-		request, _ = http.NewRequest("POST", "/", bytes.NewBuffer([]byte(`{"name":"Mary Doe"}`)))
+		request, _ = http.NewRequest(
+			"POST",
+			"/",
+			bytes.NewBuffer([]byte(`{"name":"Mary Doe","email":"user@host.net"}`)),
+		)
 		handler(response, request)
 		assert.Equal(t, http.StatusOK, response.Result().StatusCode)
 		assert.JSONEq(t, "{\"Message\":\"Mary Doe\"}", response.Body.String())
@@ -52,9 +58,7 @@ func TestCreateHandler(t *testing.T) {
 	t.Run("user_parser_no_error", func(t *testing.T) {
 		t.Parallel()
 
-		typedhandler.ResetCreatedInstances()
-
-		handler := typedhandler.CreateHandler(parseRequest, serviceRun)
+		handler := typedhandler.CreateHandler(parseRequest, nil, serviceRun)
 		request, _ := http.NewRequest("POST", "/", bytes.NewBuffer([]byte(`{"name":"John Doe"}`)))
 		response := httptest.NewRecorder()
 		handler(response, request)
@@ -74,63 +78,51 @@ func BenchmarkCreateHandler(b *testing.B) {
 func easyjsonPoolEnabled(b *testing.B) {
 	typedhandler.PoolEnabled = true
 
-	typedhandler.ResetCreatedInstances()
-
-	parser := typedhandler.CreateParser[*sample.Request]()
+	parser, doneFunc := typedhandler.CreateParser[*sample.Request]()
 	for b.Loop() {
-		handler := typedhandler.CreateHandler(parser, serviceRun)
+		handler := typedhandler.CreateHandler(parser, doneFunc, serviceRun)
 		request, _ := http.NewRequest("POST", "/", bytes.NewBuffer([]byte(`{"name":"John Doe"}`)))
 		response := httptest.NewRecorder()
 		handler(response, request)
 	}
 
-	b.ReportMetric(float64(typedhandler.CreatedInstances()), "instances")
 }
 
 func easyJsonPoolDisabled(b *testing.B) {
 	typedhandler.PoolEnabled = false
 
-	typedhandler.ResetCreatedInstances()
-
-	parser := typedhandler.CreateParser[*sample.Request]()
+	parser, doneFunc := typedhandler.CreateParser[*sample.Request]()
 	for b.Loop() {
-		handler := typedhandler.CreateHandler(parser, serviceRun)
+		handler := typedhandler.CreateHandler(parser, doneFunc, serviceRun)
 		request, _ := http.NewRequest("POST", "/", bytes.NewBuffer([]byte(`{"name":"John Doe"}`)))
 		response := httptest.NewRecorder()
 		handler(response, request)
 	}
 
-	b.ReportMetric(float64(typedhandler.CreatedInstances()), "instances")
 }
 
 func normalJsonPoolEnabled(b *testing.B) {
 	typedhandler.PoolEnabled = true
 
-	typedhandler.ResetCreatedInstances()
-
-	parser := typedhandler.CreateParser[*sample.RequestNormal]()
+	parser, doneFunc := typedhandler.CreateParser[*sample.RequestNormal]()
 	for b.Loop() {
-		handler := typedhandler.CreateHandler(parser, serviceRunNormal)
+		handler := typedhandler.CreateHandler(parser, doneFunc, serviceRunNormal)
 		request, _ := http.NewRequest("POST", "/", bytes.NewBuffer([]byte(`{"name":"John Doe"}`)))
 		response := httptest.NewRecorder()
 		handler(response, request)
 	}
 
-	b.ReportMetric(float64(typedhandler.CreatedInstances()), "instances")
 }
 
 func normalJsonPoolDisabled(b *testing.B) {
 	typedhandler.PoolEnabled = false
 
-	typedhandler.ResetCreatedInstances()
-
-	parser := typedhandler.CreateParser[*sample.RequestNormal]()
+	parser, doneFunc := typedhandler.CreateParser[*sample.RequestNormal]()
 	for b.Loop() {
-		handler := typedhandler.CreateHandler(parser, serviceRunNormal)
+		handler := typedhandler.CreateHandler(parser, doneFunc, serviceRunNormal)
 		request, _ := http.NewRequest("POST", "/", bytes.NewBuffer([]byte(`{"name":"John Doe"}`)))
 		response := httptest.NewRecorder()
 		handler(response, request)
 	}
 
-	b.ReportMetric(float64(typedhandler.CreatedInstances()), "instances")
 }

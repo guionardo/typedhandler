@@ -111,21 +111,27 @@ func TestCreateHandler(t *testing.T) {
 	t.Run("request_type_as_struct_should_panics", func(t *testing.T) {
 		t.Parallel()
 		assert.Panics(t, func() {
-			_ = CreateHandler(func(r *http.Request) (sample.Request, error) {
-				return sample.Request{}, nil
-			}, func(ctx context.Context, req sample.Request) (sample.Response, int, error) {
-				return sample.Response{}, http.StatusOK, nil
-			})
+			_ = CreateHandler(
+				func(r *http.Request) (sample.Request, error) {
+					return sample.Request{}, nil
+				},
+				nil,
+				func(ctx context.Context, req sample.Request) (sample.Response, int, error) {
+					return sample.Response{}, http.StatusOK, nil
+				})
 		})
 	})
 	t.Run("parsing_error_should_return_bad_request", func(t *testing.T) {
 		t.Parallel()
 
-		handler := CreateHandler(func(r *http.Request) (*sample.Request, error) {
-			return nil, errors.New("parsing error")
-		}, func(ctx context.Context, req *sample.Request) (sample.Response, int, error) {
-			return sample.Response{}, http.StatusOK, nil
-		})
+		handler := CreateHandler(
+			func(r *http.Request) (*sample.Request, error) {
+				return nil, errors.New("parsing error")
+			},
+			nil,
+			func(ctx context.Context, req *sample.Request) (sample.Response, int, error) {
+				return sample.Response{}, http.StatusOK, nil
+			})
 		w := httptest.NewRecorder()
 		handler(w, httptest.NewRequest(http.MethodGet, "/", nil))
 		assert.Equal(t, http.StatusInternalServerError, w.Result().StatusCode)

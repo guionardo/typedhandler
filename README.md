@@ -64,12 +64,12 @@ go get github.com/guionardo/typedhandler
 
 TypedHandler supports multiple data sources via struct tags:
 
-| Tag | Source | Example |
-|-----|--------|---------|
-| `path` | URL path parameters | `{id}` in route `/users/{id}` |
-| `query` | Query string | `?page=1&limit=10` |
-| `header` | HTTP headers | `X-API-Key`, `Authorization` |
-| `json` | JSON request body | `{"username": "john"}` |
+| Tag      | Source              | Example                       |
+| -------- | ------------------- | ----------------------------- |
+| `path`   | URL path parameters | `{id}` in route `/users/{id}` |
+| `query`  | Query string        | `?page=1&limit=10`            |
+| `header` | HTTP headers        | `X-API-Key`, `Authorization`  |
+| `json`   | JSON request body   | `{"username": "john"}`        |
 
 ### Supported Types
 
@@ -79,8 +79,27 @@ Path, query, and header parameters support automatic conversion to:
 - `uint`, `uint8`, `uint16`, `uint32`, `uint64`
 - `float32`, `float64`
 - `bool`
-- `time.Time` (RFC3339 format)
+- `time.Time` ([multiple formats](#timetime-parsing))
 - `time.Duration`
+
+### time.Time parsing
+
+By default, the parser will use a set of layouts from the standard lib:
+
+| Layout      | Template                              |
+| ----------- | ------------------------------------- |
+| DateTime    | "2006-01-02 15:04:05"                 |
+| RFC3339     | "2006-01-02T15:04:05Z07:00"           |
+| RFC3339Nano | "2006-01-02T15:04:05.999999999Z07:00" |
+| RFC1123     | "Mon, 02 Jan 2006 15:04:05 MST"       |
+| RFC1123Z    | "Mon, 02 Jan 2006 15:04:05 -0700"     |
+| ANSIC       | "Mon Jan _2 15:04:05 2006"            |
+| DateOnly    | "2006-01-02"                          |
+| TimeOnly    | "15:04:05"                            |
+
+The parser will priorize the layouts with successful parsing.
+
+If you need to use another formats, call the `typedhandler.SetTimeLayouts` func
 
 ## Body Parsing Strategies
 

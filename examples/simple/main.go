@@ -21,8 +21,8 @@ type (
 )
 
 func main() {
-	requestParser := typedhandler.CreateParser[*LoginRequest]()
-	handler := typedhandler.CreateHandler(requestParser, serviceFunc)
+	requestParser, doneFunc := typedhandler.CreateParser[*LoginRequest]()
+	handler := typedhandler.CreateHandler(requestParser, doneFunc, serviceFunc)
 	http.HandleFunc("POST /login", handler)
 
 	if err := http.ListenAndServe(":8000", http.DefaultServeMux); err != nil { //nolint: gosec

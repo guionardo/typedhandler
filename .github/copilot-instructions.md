@@ -1,124 +1,90 @@
-# Router - HTTP Handler Helper
+## TypedHandler — current status & developer notes
 
-This is a high-performance Go HTTP request parser and handler generator that uses generics, reflection, and object pooling to minimize allocations.
+This file documents the real, up-to-date status of the `typedhandler` package in this
+repository. `typedhandler` is a compact, high-performance Go HTTP request parser and
+handler generator that composes a request parser, optional instance pooling, business
+logic (service function) and consistent response/error writing into an `http.HandlerFunc`.
 
-## Architecture Overview
+The implementation uses Go generics and reflection (metadata is cached) and ships with
+examples and tests. The code is intentionally small and focuses on clarity and
+low-allocation paths; performance-sensitive JSON parsing can optionally be swapped in
+(see `examples/sample/sample_easyjson.go`).
 
-### Core Components
+Core files and responsibilities
+- `typedhandler/handler.go` — handler creation (`CreateHandler`, `CreateSimpleHandler`),
+    response and error writing logic.
+- `typedhandler/parser.go` — request parsing entrypoints and orchestration.
+- `typedhandler/schema_helper.go`, `parser_infos.go` (if present) — reflection-based
+    metadata extraction for struct tags and body parsing strategies.
+- `typedhandler/data_conversion.go` — conversion helpers for path/query/header values
+    (strings → ints, bools, time.Time, etc).
+- `examples/` — runnable examples (`examples/simple/main.go` shows a minimal server).
+- Tests and benchmarks are under `typedhandler/` (e.g. `handler_test.go`,
+    `handler_create_handler_test.go`).
 
-**Request Flow**: HTTP Request → Parser → Instance Pool → Service Function → Response Writer
-- `router.go`: Main handler creation using generics (`CreateHandler`, `CreateSimpleHandler`)
-- `parser.go`: Request parsing logic extracting data from path/query/headers/body into structs
-- `instance_pool.go`: sync.Pool-based memory reuse to reduce allocations (toggle with `PoolEnabled`)
-- `parser_infos.go`: Reflection-based metadata extraction from struct tags at initialization
-- `data_conversion.go`: Type conversion for path/query/header values (string → int/bool/time.Time/etc)
+Quick usage summary
+- Create a parser for your request struct and then create a handler.
+  See examples/simple/main.go for concrete usage with CreateParser and CreateHandler.
+- Alternatively, use CreateSimpleHandler, which is a convenience wrapper that builds
+  the parser for you internally.
 
-### Key Design Patterns
+Service function contract
+- Signature: func(ctx context.Context, req RIn) (ROut, int, error)
+- The returned int is the HTTP status code; if <=0 it defaults to 200 OK.
 
-**Generic Handler Creation**: Handlers are created with type parameters for request and response schemas:
-```go
-CreateHandler[RIn RequestSchema, ROut ResponseSchema](
-    parseRequestFunc ParseRequestFunc[RIn],
-    serviceFunc ServiceFunc[RIn, ROut],
-) HandlerFunc
-```
+Key conventions & constraints
+- Request schema types are expected to be pointer types (e.g. `*MyRequest`). The
+    parser and some helpers will panic if a non-pointer type is supplied.
+- Struct tags supported: `path`, `query`, `header`, and `json` (for body fields).
+- Header-tagged fields must be `string` types (the parser will panic on invalid
+    header field types during initialization).
+- The library does not perform validation (the `validate` tag may be recognised but
+    is not enforced). Add your own validation in the service function or integrate a
+    validator in your project.
 
-**Struct Tag-Based Parsing**: Request structs use tags to define data sources:
-```go
-type LoginRequest struct {
-    UserName string `json:"username"`           // from body
-    City     string `query:"city"`              // from query params
-    State    string `header:"state"`            // from headers
-    Country  string `path:"country"`            // from path params
-}
-```
+Pooling and lifecycle
+- The package provides optional instance pooling (controlled by the global
+    `typedhandler.PoolEnabled` flag). When pooling is enabled, request instances are
+    reused via `sync.Pool` to reduce allocations.
+- Implement `Resettable` on request types to customise reset behavior. The package
+    exposes `CreatedInstances()` and `ResetCreatedInstances()` for bookkeeping in
+    benchmarks/tests.
 
-**Object Pooling**: `InstancePool` reuses request struct instances via `sync.Pool`:
-- Controlled by global `PoolEnabled` flag
-- Custom reset via `Resettable` interface or auto-generated reset functions
-- Track allocations with `CreatedInstances()` / `ResetCreatedInstances()`
+Body parsing modes
+- JsonBody (default): entire body is unmarshaled into fields tagged with `json:`.
+- NoBody: skip body parsing (useful for GET/DELETE endpoints).
+- JsonField: unmarshal only into a specific field. Implement `GetBodyField() any`
+    on the request type to return a pointer to the target field.
 
-**Body Parsing Strategies** (see `parser_infos.go`):
-- `NoBody`: No body parsing
-- `JsonBody`: Unmarshal entire body into struct (fields with `json:` tags)
-- `JsonField`: Unmarshal body into specific field via `BodyFieldGetter` interface
+Error handling
+- Support for custom error types: implement `HttpError` (Status() int) or
+    `HttpJsonError` (Status() int, Json() []byte) to control status code and body.
 
-### Error Handling
+Development & testing
+- Run tests: `make test` (Makefile delegates to `go test` for the module).
+- Benchmarks: `make bench` (writes output to `benchmarks/benchmark.txt`).
+- Linting: `make deps` will install development tools; CI is configured to run
+    `golangci-lint` in the project.
 
-Error responses support custom status codes via interfaces:
-- `HttpError`: Custom status code (`Status() int`)
-- `HttpJsonError`: Custom status + JSON body (`Status() int`, `Json() []byte`)
+Compatibility
+- The project uses Go generics and targets a recent Go version (see `go.mod`).
+    The repository has been developed against Go 1.25+ but will likely work with
+    other recent releases that support generics.
 
-## Development Workflows
+Examples & tests to check for usage
+- `examples/simple/main.go` — demonstrates `CreateParser` + `CreateHandler` and
+    a working HTTP server.
+- `README.md` — quick-start snippets and more guidance.
+- `typedhandler/handler_test.go`, `typedhandler/handler_create_handler_test.go` —
+    unit tests and benchmarks that exercise the public handler creation APIs.
 
-**Run Tests**:
-```bash
-make test                  # Run all tests
-make coverage              # Run with coverage report (requires go-test-coverage)
-```
+Notes and TODOs
+- The library focuses on parsing and handler composition; adding a small built-in
+    validation hook (pluggable validator) could be a useful enhancement.
+- Consider documenting the expected route syntax for path parameters (the project
+    assumes a router that supports `{param}` style path parameters when used with
+    `http.HandleFunc` from Go 1.22+).
 
-**Benchmarking**:
-```bash
-make bench                 # Run benchmarks, save to benchmarks/benchmark.txt
-make bench-stat            # Compare new benchmarks against previous run using benchstat
-```
-
-**Dependencies**:
-```bash
-make deps                  # Install all dev tools (pre-commit, golangci-lint, etc)
-```
-
-**Key Dependencies**:
-- `github.com/mailru/easyjson`: Optional for performance-critical JSON unmarshaling (see `sample_easyjson.go`)
-- `github.com/stretchr/testify`: Testing assertions
-- Go 1.25.3+ (uses generics heavily)
-
-## Project-Specific Conventions
-
-**Pointer vs Value Types**: Request schemas MUST be pointer types:
-```go
-// Correct
-CreateParser[*LoginRequest]()
-
-// Will panic
-CreateParser[LoginRequest]()  // Error: "CreateHandler must receive *LoginRequest"
-```
-
-**Parser Initialization**: `getParserInfos[T]()` uses reflection once per type, then caches metadata. Panics early if struct tags are invalid.
-
-**Testing Style**:
-- Use `t.Parallel()` for all tests
-- Test helper types defined inline (see `router_test.go` for `httpError`, `jsonError`)
-- Benchmark both pool-enabled and pool-disabled scenarios
-
-**Reset Pattern**: Implement `Resettable` interface for custom cleanup:
-```go
-func (r *Request) Reset() {
-    r.Name = ""
-    r.Age = 0
-    // ...
-}
-```
-
-**Type Conversion**: Supports string → `int/uint/float/bool/time.Time/time.Duration` for path/query/header params (see `data_conversion.go`)
-
-## Integration Points
-
-**Example Usage** (`examples/simple/main.go`):
-```go
-requestParser := router.CreateParser[*LoginRequest]()
-handler := router.CreateHandler(requestParser, serviceFunc)
-http.HandleFunc("POST /login", handler)
-```
-
-**Service Function Signature**:
-```go
-func(ctx context.Context, request RIn) (response ROut, status int, err error)
-```
-
-## Critical Notes
-
-- **No validation built-in**: The `validate` tag is detected but not enforced—integrate your own validator
-- **Header fields must be strings**: Parser will panic during initialization if header-tagged fields aren't strings
-- **Body field interface**: For `JsonField` body type, implement `GetBodyField() any` returning a pointer to the field
-- **Benchmark files**: `benchmarks/` contains historical benchmark data for comparison
+If you need the copilot instructions to be even more condensed or to include
+direct links to specific test function names, tell me which targets to reference
+and I'll update the file accordingly.
