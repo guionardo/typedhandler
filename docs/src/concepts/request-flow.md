@@ -1,4 +1,4 @@
-# Components
+# Request Flow
 
 ```mermaid
 sequenceDiagram
@@ -12,13 +12,13 @@ sequenceDiagram
     parser -->> pool: asks for a request struct instance
     pool ->> parser: *struct
       note over parser: populates struct with request data<br/>and runs validation
-      alt error
-        parser ->> route: write response error
-      else
+      alt succeed
         parser ->> service: (ctx, *struct)
         note over service: business action with data
         service ->> parser: (*ResponseStruct, status code, error)
         parser ->> route: write response and status code
+      else error
+        parser ->> route: write response error
       end
 
     parser -->> pool: return *struct to pool<br/> (avoid new allocation)

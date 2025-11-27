@@ -1,10 +1,10 @@
 # Typed Handler
 
-Typed Handler is a high-performance, zero-allocation HTTP request parser for Go that automatically maps HTTP requests to strongly-typed structs using generics and object pooling.
+Typed Handler is a high-performance, minimal-allocation HTTP request parser for Go that automatically maps HTTP requests to strongly-typed structs using generics and object pooling.
 
 <div class="grid cards" markdown>
 
-- 🚀 **Zero Allocations**
+- 🚀 **Minimal Allocations**
 
     ---
 
@@ -22,7 +22,7 @@ Typed Handler is a high-performance, zero-allocation HTTP request parser for Go 
 
     Parse path params, query strings, headers, and body with simple tags
 
-    <!-- [Learn more about the dependency container :material-arrow-right:](container.md) -->
+    [Learn more about the control tags :material-arrow-right:](concepts/struct-tag-based.md)
 
 - ⚡ **High Performance**
 
@@ -30,13 +30,15 @@ Typed Handler is a high-performance, zero-allocation HTTP request parser for Go 
 
     Reflection done once at initialization, cached for reuse
 
-    [Learn more about modules :material-arrow-right:](modules.md)
-
 - 🔧 **Flexible**
+
+    ---
 
     Supports custom error types, body parsing strategies, and reset patterns
 
 - ✨ **Future features**
+
+    ---
 
     Generated code, to increase performance with zero reflection
 

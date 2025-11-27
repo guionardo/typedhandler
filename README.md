@@ -5,11 +5,11 @@
 [![Dependabot Updates](https://github.com/guionardo/typedhandler/actions/workflows/dependabot/dependabot-updates/badge.svg)](https://github.com/guionardo/typedhandler/actions/workflows/dependabot/dependabot-updates)
 [![GitHub Pages](https://github.com/guionardo/typedhandler/actions/workflows/docs.yml/badge.svg)](https://guionardo.github.io/typedhandler/)
 
-A high-performance, zero-allocation HTTP request parser for Go that automatically maps HTTP requests to strongly-typed structs using generics and object pooling.
+A high-performance, minimal-allocation HTTP request parser for Go that automatically maps HTTP requests to strongly-typed structs using generics and object pooling.
 
 ## Features
 
-- 🚀 **Zero Allocations**: Uses `sync.Pool` for request struct reuse
+- 🚀 **Minimal Allocations**: Uses `sync.Pool` for request struct reuse
 - 🎯 **Type-Safe**: Leverages Go generics for compile-time type checking
 - 🏷️ **Struct Tag-Based**: Parse path params, query strings, headers, and body with simple tags
 - ⚡ **High Performance**: Reflection done once at initialization, cached for reuse
@@ -76,6 +76,7 @@ TypedHandler supports multiple data sources via struct tags:
 ### Supported Types
 
 Path, query, and header parameters support automatic conversion to:
+
 - `string`
 - `int`, `int8`, `int16`, `int32`, `int64`
 - `uint`, `uint8`, `uint16`, `uint32`, `uint64`
@@ -108,6 +109,7 @@ If you need to use another formats, call the `typedhandler.SetTimeLayouts` func
 TypedHandler supports three body parsing modes:
 
 ### 1. JsonBody (Default)
+
 Unmarshals entire request body into struct fields with `json:` tags:
 
 ```go
@@ -118,6 +120,7 @@ type Request struct {
 ```
 
 ### 2. NoBody
+
 Skips body parsing entirely (for GET, DELETE, etc.):
 
 ```go
@@ -128,6 +131,7 @@ type Request struct {
 ```
 
 ### 3. JsonField
+
 Unmarshals body into a specific field. Implement `BodyFieldGetter`:
 
 ```go
@@ -205,7 +209,7 @@ func (e MyJSONError) Json() []byte {
 
 TypedHandler is designed for high-throughput APIs:
 
-- **Zero allocations** per request when pooling is enabled
+- **Minimal allocations** per request when pooling is enabled
 - **Reflection cached** at parser creation time
 - **Optimized JSON parsing** with optional [easyjson](https://github.com/mailru/easyjson) support
 

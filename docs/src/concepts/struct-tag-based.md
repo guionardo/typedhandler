@@ -1,14 +1,26 @@
 # 🏷️ Struct Tag-Based
 
+## Request Struct
+
+Parsing of the request data uses a special struct with tags that describes from where it will get the information.
+
+We will call this struct as `RequestStruct`.
+
+## HTTP Request Anatomy
+
+```
+> curl -X METHOD http://apihost/path/{pid}/resource/{rid}?name=John&age=20 -H "Authorization: Bearer" -d '{"message":"Great news!", "success": true}'
+```
+
 First step: define your request data using a struct with special tags:
 
-| Tag    | Description                                                     |
-| ------ | --------------------------------------------------------------- |
-| json   | Request body will be unmarshaled into struct                    |
-| path   | Value from request path parameter                               |
-| query  | Value from request query (alias = `form`)                       |
-| header | Value from request header                                       |
-| body   | Request body will be unmarshaled into inner field of the struct |
+| Part | Tag    | Description                                                   | Type  |
+| ---- | ------ | --------------------------------------------------------------- | ----|
+| path | [path](#path)   | Value from request path parameter                               | [multiple](#type-conversion)|
+| query | [query](#query)  | Value from request query (alias = `form`)                       |[multiple](#type-conversion)
+| header | [header](#header) | Value from request header                                       |only string |
+| body | [json](#json)   | Request body will be unmarshaled into struct                    | struct |
+| body | [body](#body)   | Request body will be unmarshaled into inner field of the struct | struct |
 
 ```go
 type LoginRequest struct {
@@ -24,10 +36,6 @@ In this example, the `json` tags will be interpreted as a request with a JSON bo
 ```
 
 You can use these tags to parse the request:
-
-## `json`
-
-For JSON body.
 
 ## `path`
 
@@ -68,3 +76,52 @@ type SampleRequest struct {
 The request will populate the field `Name` with the value "John"
 
 ## `header`
+
+For header parameters.
+
+```go
+type SampleRequest struct {
+    Authorization string `header:"authorization"`
+}
+```
+
+```shell
+> curl http://localhost -H 'Authorization: token'
+```
+
+## `json`
+
+For JSON body.
+
+## `body`
+
+## Type conversion
+
+The automatic parsing of the fields will convert to:
+
+* String (default)
+* Bool (parsed by [strconv.ParseBool](https://pkg.go.dev/strconv#ParseBool))
+* Int (8, 16, 32, 64) (parsed by [strconv.ParseInt](https://pkg.go.dev/strconv#ParseInt))
+* UInt (8, 16, 32, 64) (parsed by [strconv.ParseUint](https://pkg.go.dev/strconv#ParseUInt))
+* Float (32, 64) (parsed by [strconv.ParseFloat](https://pkg.go.dev/strconv#ParseFloat))
+* time.Duration (parsed by [time.ParseDuration](https://pkg.go.dev/time#ParseDuration))
+* time.Time (smart parsing with multiple layouts)
+
+### ⏱️ time.Time parsing
+
+Time can be represented by different layouts. To handle this, I choose a dynamic approach.
+
+Using a slice of layouts, the parser will try to parse a time string throught all the layouts. When it finds a match, the layout will be the first to be used in the next parsing, optimizing the search by a valid layout on each iteration.
+
+The default [layouts](https://pkg.go.dev/time#pkg-constants) are:
+
+* time.DateTime
+* time.RFC3339
+* time.RFC3339Nano
+* time.RFC1123
+* time.RFC1123Z
+* time.ANSIC
+* time.DateOnly
+* time.TimeOnly
+
+You can change it using the func `typedhandler.SetTimeLayouts(layouts []string)`
