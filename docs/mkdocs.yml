@@ -2,6 +2,7 @@ site_name: Typed Handler
 site_url: https://guionardo.github.io/typedhandler
 site_description: >-
   Typed Handler is a high-performance, zero-allocation HTTP request parser for Go that automatically maps HTTP requests to strongly-typed structs using generics and object pooling.
+site_author: Guionardo Furlan
 
 repo_url: https://github.com/guionardo/typedhandler
 repo_name: guionardo/typedhandler
@@ -27,6 +28,7 @@ strict: true
 # This does not match what we were using previously (foo/bar.html).
 # So we'll disable this behavior.
 use_directory_urls: false
+dev_addr: "192.168.88.35:8000"
 
 validation:
   # Warn about Markdown files not listed in the nav.
@@ -156,6 +158,7 @@ nav:
   - Concepts:
     - Components: concepts/components.md
     - Struct tag based: concepts/struct-tag-based.md
+    - Parser function: concepts/parser-func.md
   #   - Container: container.md
   #   - Lifecycle: lifecycle.md
     - Modules: modules.md
